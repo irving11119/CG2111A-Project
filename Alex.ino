@@ -41,13 +41,13 @@ volatile TDirection dir = STOP;
  *    Alex's State Variables
  */
 
- #define PI 3.141592654
+#define PI 3.141592654
 
- #define ALEX_LENGTH 16
- #define ALEX_BREADTH 6
+#define ALEX_LENGTH 16
+#define ALEX_BREADTH 6
 
- float AlexDiagonal = 0.0;
- float AlexCirc = 0.0;
+float AlexDiagonal = 0.0;
+float AlexCirc = 0.0;
 
 // Store the ticks from Alex's left and
 // right encoders.
@@ -74,13 +74,11 @@ unsigned long newDist;
 unsigned long deltaTicks;
 unsigned long targetTicks;
 
-
 /*
  * 
  * Alex Communication Routines.
  * 
  */
- 
 TResult readPacket(TPacket *packet)
 {
     // Reads in data from the serial port and
@@ -309,7 +307,6 @@ void startSerial()
 
 int readSerial(char *buffer)
 {
-
   int count=0;
 
   while(Serial.available())
@@ -371,8 +368,7 @@ int pwmVal(float speed)
 // continue moving forward indefinitely.
 void forward(float dist, float speed)
 {
-
-   if(dist > 0)
+  if(dist > 0)
            deltaDist = dist;
      else
            deltaDist=9999999;
@@ -404,8 +400,7 @@ void forward(float dist, float speed)
 // continue reversing indefinitely.
 void reverse(float dist, float speed)
 {
-
-   if(dist > 0)
+  if(dist > 0)
            deltaDist = dist;
      else
            deltaDist=9999999;
@@ -439,9 +434,9 @@ unsigned long computeDeltaTicks(float ang){
 void left(float ang, float speed)
 {
   if(ang == 0) deltaTicks=99999999;
-else
-deltaTicks=computeDeltaTicks(ang);
-targetTicks = leftReverseTicksTurns + deltaTicks;
+  else
+  deltaTicks=computeDeltaTicks(ang);
+  targetTicks = leftReverseTicksTurns + deltaTicks;
   dir = LEFT;
   int val = pwmVal(speed);
 
@@ -581,8 +576,6 @@ void waitForHello()
     {
       if(hello.packetType == PACKET_TYPE_HELLO)
       {
-     
-
         sendOK();
         exit=1;
       }
@@ -639,15 +632,7 @@ void handlePacket(TPacket *packet)
 }
 
 void loop() {
-
-// Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
-// forward(0, 100);
-
-// Uncomment the code below for Week 9 Studio 2
-
-
- // put your main code here, to run repeatedly:
+// put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
   TResult result = readPacket(&recvPacket);
