@@ -660,6 +660,16 @@ void loop() {
     }
   } else
 
+  if(dir == BACKWARD)
+  {
+    if(reverseDist > newDist)
+    {
+      deltaDist = 0;
+      newDist = 0;
+      stop();
+    }
+  } else
+
   if(dir == STOP){
     deltaDist = 0;
     newDist = 0;
