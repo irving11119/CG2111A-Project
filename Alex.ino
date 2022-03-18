@@ -404,7 +404,7 @@ void reverse(float dist, float speed)
            deltaDist = dist;
      else
            deltaDist=9999999;
-     newDist=forwardDist - deltaDist;
+     newDist=reverseDist + deltaDist;
   dir = BACKWARD;
   int val = pwmVal(speed);
 
@@ -457,8 +457,13 @@ void left(float ang, float speed)
 // turn right indefinitely.
 void right(float ang, float speed)
 {
-  dir = RIGHT;
+  if(ang == 0) deltaTicks=99999999;
+  else
+  deltaTicks=computeDeltaTicks(ang);
+  targetTicks = leftReverseTicksTurns + deltaTicks;
+  dir = LEFT;
   int val = pwmVal(speed);
+  dir = RIGHT;
 
   // For now we will ignore ang. We will fix this in Week 9.
   // We will also replace this code with bare-metal later.
