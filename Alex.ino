@@ -460,7 +460,7 @@ void right(float ang, float speed)
   if(ang == 0) deltaTicks=99999999;
   else
   deltaTicks=computeDeltaTicks(ang);
-  targetTicks = leftReverseTicksTurns + deltaTicks;
+  targetTicks = rightReverseTicksTurns + deltaTicks;
   dir = LEFT;
   int val = pwmVal(speed);
   dir = RIGHT;
