@@ -339,6 +339,18 @@ void setupMotors()
    *    B1IN - Pin 10, PB2, OC1B
    *    B2In - pIN 11, PB3, OC2A
    */
+   TCNT0 = 0;
+   TCNT1 = 0;
+
+   OCR0A = 0;
+   OCR0B = 0;
+
+   TCCR0A = 0b10100001;
+
+   TCCR1A = 0b10100001;
+   
+   TIMSK0 |= 0b110;
+   TIMSK1 |= 0b110;
 }
 
 // Start the PWM for Alex's motors.
@@ -346,7 +358,8 @@ void setupMotors()
 // blank.
 void startMotors()
 {
-  
+  TCCR0B = 0b011;
+  TCCR1B = 0b11;
 }
 
 // Convert percentages to PWM values
@@ -383,6 +396,13 @@ void forward(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
+
+  /*
+   OCR0A = val;
+   OCR0B = val;
+   OCR1A = 0;
+   OCR1B = 0;
+   */
   
   analogWrite(LF, val);
   analogWrite(RF, val);
@@ -415,6 +435,14 @@ void reverse(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
+
+    /*
+   OCR1A = val;
+   OCR1B = val;
+   OCR0A = 0;
+   OCR0B = 0;
+   */
+   
   analogWrite(LR, val);
   analogWrite(RR, val);
   analogWrite(LF, 0);
@@ -444,6 +472,12 @@ void left(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
+  /*
+   OCR1B = val;
+   OCR0B = val;
+   OCR0A = 0;
+   OCR1A = 0;
+   */
   analogWrite(LR, val);
   analogWrite(RF, val);
   analogWrite(LF, 0);
@@ -469,6 +503,13 @@ void right(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
+
+  /*
+   OCR1A = val;
+   OCR0A = val;
+   OCR0B = 0;
+   OCR1B = 0;
+   */
   analogWrite(RR, val);
   analogWrite(LF, val);
   analogWrite(LR, 0);
@@ -479,6 +520,13 @@ void right(float ang, float speed)
 void stop()
 {
   dir = STOP;
+
+    /*
+   OCR0A = 0;
+   OCR0B = 0;
+   OCR1A = 0;
+   OCR1B = 0;
+   */
   analogWrite(LF, 0);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
