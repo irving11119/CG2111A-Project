@@ -362,6 +362,22 @@ void startMotors()
   TCCR1B = 0b11;
 }
 
+ISR(TIMER0_COMPA_vect){
+  
+}
+
+ISR(TIMER0_COMPB_vect){
+  
+}
+
+ISR(TIMER1_COMPA_vect){
+  
+}
+
+ISR(TIMER1_COMPB_vect){
+  
+}
+
 // Convert percentages to PWM values
 int pwmVal(float speed)
 {
@@ -397,18 +413,18 @@ void forward(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
 
-  /*
-   OCR0A = val;
-   OCR0B = val;
-   OCR1A = 0;
-   OCR1B = 0;
-   */
+ 
+  OCR0A = val;
+  OCR0B = val;
+  OCR1A = 0;
+  OCR1B = 0;
   
+  /*
   analogWrite(LF, val);
   analogWrite(RF, val);
   analogWrite(LR,0);
   analogWrite(RR, 0);
-
+*/
  
 
 }
@@ -436,17 +452,18 @@ void reverse(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
 
-    /*
-   OCR1A = val;
-   OCR1B = val;
-   OCR0A = 0;
-   OCR0B = 0;
-   */
+    
+  OCR1A = val;
+  OCR1B = val;
+  OCR0A = 0;
+  OCR0B = 0;
    
+  /*
   analogWrite(LR, val);
   analogWrite(RR, val);
   analogWrite(LF, 0);
   analogWrite(RF, 0);
+  */
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
@@ -472,16 +489,18 @@ void left(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
-  /*
-   OCR1B = val;
-   OCR0B = val;
-   OCR0A = 0;
-   OCR1A = 0;
-   */
+  
+  OCR1B = val;
+  OCR0B = val;
+  OCR0A = 0;
+  OCR1A = 0;
+   
+   /*
   analogWrite(LR, val);
   analogWrite(RF, val);
   analogWrite(LF, 0);
   analogWrite(RR, 0);
+  */
 }
 
 // Turn Alex right "ang" degrees at speed "speed".
@@ -504,16 +523,18 @@ void right(float ang, float speed)
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
 
+  
+  OCR1A = val;
+  OCR0A = val;
+  OCR0B = 0;
+  OCR1B = 0;
+  
   /*
-   OCR1A = val;
-   OCR0A = val;
-   OCR0B = 0;
-   OCR1B = 0;
-   */
   analogWrite(RR, val);
   analogWrite(LF, val);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
+  */
 }
 
 // Stop Alex. To replace with bare-metal code later.
@@ -521,16 +542,17 @@ void stop()
 {
   dir = STOP;
 
-    /*
-   OCR0A = 0;
-   OCR0B = 0;
-   OCR1A = 0;
-   OCR1B = 0;
-   */
+  OCR0A = 0;
+  OCR0B = 0;
+  OCR1A = 0;
+  OCR1B = 0;
+  
+  /*
   analogWrite(LF, 0);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
   analogWrite(RR, 0);
+  */
 }
 
 /*
