@@ -1,5 +1,7 @@
 #include <serialize.h>
-
+#include "Arduino.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include "packet.h"
 #include "constants.h"
 #include <math.h>
@@ -337,8 +339,26 @@ void setupMotors()
    *    A1IN - Pin 5, PD5, OC0B
    *    A2IN - Pin 6, PD6, OC0A
    *    B1IN - Pin 10, PB2, OC1B
-   *    B2In - pIN 11, PB3, OC2A
+   *    B2In - pIN 9, PB1, OC1A
    */
+  //set up timer0
+  TCNT0 = 0;
+  TCCR0A = 0b10100001;
+  
+  OCR0A = 0;
+  OCR0B = 0;
+  
+  TIMSK0 |= 0b110;
+  
+  //set up timer1
+  TCNT1 = 0;
+  TCCR1A = 0b10100001;;
+  
+  OCR1A = 0;
+  OCR1B = 0;
+  
+  TIMSK1 |= 0b110;
+
 }
 
 // Start the PWM for Alex's motors.
@@ -346,7 +366,25 @@ void setupMotors()
 // blank.
 void startMotors()
 {
+  TCCR0B = 0b00000011;
+  TCCR1B = 0b00000011;
   
+  DDRD |= (1 << 5 | 1 << 6);
+  DDRB |= (1 << 1 | 1 << 2);
+
+}
+
+
+ISR(TIMER0_COMPA_vect){
+}
+
+ISR(TIMER0_COMPB_vect){
+}
+
+ISR(TIMER1_COMPA_vect){
+}
+
+ISR(TIMER1_COMPB_vect){
 }
 
 // Convert percentages to PWM values
@@ -383,13 +421,12 @@ void forward(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
-  
-  analogWrite(LF, val);
-  analogWrite(RF, val);
-  analogWrite(LR,0);
-  analogWrite(RR, 0);
 
  
+  OCR0A = val;
+  OCR0B = 0;
+  OCR1A = 0;
+  OCR1B = val;
 
 }
 
@@ -415,10 +452,11 @@ void reverse(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
-  analogWrite(LR, val);
-  analogWrite(RR, val);
-  analogWrite(LF, 0);
-  analogWrite(RF, 0);
+
+  OCR0A = 0;
+  OCR0B = val;
+  OCR1A = val;
+  OCR1B = 0;
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
@@ -444,10 +482,12 @@ void left(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
-  analogWrite(LR, val);
-  analogWrite(RF, val);
-  analogWrite(LF, 0);
-  analogWrite(RR, 0);
+
+  OCR0A = 0;
+  OCR0B = val;
+  OCR1A = 0;
+  OCR1B = val;
+
 }
 
 // Turn Alex right "ang" degrees at speed "speed".
@@ -469,20 +509,25 @@ void right(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
-  analogWrite(RR, val);
-  analogWrite(LF, val);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
+
+  
+  OCR0A = val;
+  OCR0B = 0;
+  OCR1A = val;
+  OCR1B = 0;
+
 }
 
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 {
   dir = STOP;
-  analogWrite(LF, 0);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
-  analogWrite(RR, 0);
+
+  OCR0A = 0;
+  OCR0B = 0;
+  OCR1A = 0;
+  OCR1B = 0;
+
 }
 
 /*
@@ -702,6 +747,5 @@ if(deltaTicks > 0) {
       stop();
   }
 }
- 
  
 }
