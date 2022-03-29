@@ -15,6 +15,7 @@ typedef enum
   RIGHT=4
 } TDirection;
 volatile TDirection dir = STOP;
+
 #include <stdarg.h>
 
 /*
@@ -63,6 +64,9 @@ volatile unsigned long rightForwardTicksTurns;
 volatile unsigned long leftReverseTicksTurns; 
 volatile unsigned long rightReverseTicksTurns;
 
+volatile unsigned long cms1;
+volatile unsigned long cms2;
+
 // Store the revolutions on Alex's left
 // and right wheels
 
@@ -106,7 +110,6 @@ TResult readPacket(TPacket *packet)
     
 }
 
-
 void sendStatus()
 {
   // Implement code to send back a packet containing key
@@ -129,8 +132,12 @@ void sendStatus()
   statusPacket.params[7] = rightReverseTicksTurns;
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
+  statusPacket.params[10] = cms1;
+  statusPacket.params[11] = cms2;
   sendResponse(&statusPacket);
 }
+
+void sendDist()
 
 void sendMessage(const char *message)
 {
@@ -650,8 +657,17 @@ void waitForHello()
   } // !exit
 }
 
-// **this is not baremetal lmao
+// **please check my baremetal lol
 void startUltrasonic() {
+
+  // output
+  DDRB |= (0b10000000|0b00000001);     // trig1: pin13, trig2: pin8
+  // input
+  DDRB &= ~(0b01000000);               // echo1: pin12
+  DDRD &= ~(0b10000000);               // echo2: pin7
+  // trig pins low
+  PIND &= ~(1 << PIND0 | 1 << PIND7);
+/*
   //DDRD |= 0b11000000;
   //PIND |= (1 << PIND6 | 1 << PIND7);
   pinMode(TRIG_PIN1, OUTPUT);
@@ -660,6 +676,7 @@ void startUltrasonic() {
   pinMode(TRIG_PIN2, OUTPUT);   
   digitalWrite(TRIG_PIN2, LOW);
   pinMode(ECHO_PIN2, INPUT); 
+*/
 }
 
 void setup() {
@@ -701,8 +718,20 @@ void handlePacket(TPacket *packet)
   }
 }
 
-//*** NOT BAREMETAL
+//*** 
 void getDist() {
+
+  // set trigger pins high
+  PIND |= (1 << PIND0 | 1 << PIND7);
+  delayMicroseconds(10);
+  // set trigger pins low
+  PIND &= ~(1 << PIND0 | 1 << PIND7);
+  // read from echo pins
+  int microsecs1 = pulseIn(ECHO_PIN1, HIGH);
+  cms1 = microsecs1*SPEED_OF_SOUND/2;
+  int microsecs2 = pulseIn(ECHO_PIN2, HIGH);
+  cms2 = microsecs2*SPEED_OF_SOUND/2;
+/*
   digitalWrite(TRIG_PIN1, HIGH); 
   digitalWrite(TRIG_PIN2, HIGH); 
   delayMicroseconds(10);     
@@ -714,6 +743,7 @@ void getDist() {
   float cms2 = microsecs2*SPEED_OF_SOUND/2;
   
   dbprint("cms1: %f, cms2: %f", cms1, cms2);
+*/
 }
 
 void loop() {
@@ -783,5 +813,4 @@ if(deltaTicks > 0) {
   }
 }
   getDist();
- 
 }
