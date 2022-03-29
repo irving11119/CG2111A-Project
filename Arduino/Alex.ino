@@ -15,6 +15,7 @@ typedef enum
   RIGHT=4
 } TDirection;
 volatile TDirection dir = STOP;
+
 #include <stdarg.h>
 
 /*
@@ -63,6 +64,9 @@ volatile unsigned long rightForwardTicksTurns;
 volatile unsigned long leftReverseTicksTurns; 
 volatile unsigned long rightReverseTicksTurns;
 
+volatile unsigned long cms1;
+volatile unsigned long cms2;
+
 // Store the revolutions on Alex's left
 // and right wheels
 
@@ -104,7 +108,6 @@ TResult readPacket(TPacket *packet)
     
 }
 
-
 void sendStatus()
 {
   // Implement code to send back a packet containing key
@@ -127,8 +130,12 @@ void sendStatus()
   statusPacket.params[7] = rightReverseTicksTurns;
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
+  statusPacket.params[10] = cms1;
+  statusPacket.params[11] = cms2;
   sendResponse(&statusPacket);
 }
+
+void sendDist()
 
 void sendMessage(const char *message)
 {
@@ -698,13 +705,18 @@ void handlePacket(TPacket *packet)
   }
 }
 
-//*** NOT BAREMETAL
+//*** 
 void getDist() {
+  // set trigger pins high
   PIND |= (1 << PIND0 | 1 << PIND7);
   delayMicroseconds(10);
+  // set trigger pins low
   PIND &= ~(1 << PIND0 | 1 << PIND7);
-  int microsecs = pulseIn(ECHO_PIN, HIGH);
-  float cms = microsecs*SPEED_OF_SOUND/2;
+  // read from echo pins
+  int microsecs1 = pulseIn(ECHO_PIN1, HIGH);
+  cms1 = microsecs1*SPEED_OF_SOUND/2;
+  int microsecs2 = pulseIn(ECHO_PIN2, HIGH);
+  cms2 = microsecs2*SPEED_OF_SOUND/2;
 }
 
 void loop() {
@@ -774,5 +786,4 @@ if(deltaTicks > 0) {
   }
 }
   getDist();
- 
 }
