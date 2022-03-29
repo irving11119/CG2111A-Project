@@ -648,11 +648,15 @@ void waitForHello()
   } // !exit
 }
 
-// **this is not baremetal lmao
+// **please check my baremetal lol
 void startUltrasonic() {
-  pinMode(TRIG_PIN, OUTPUT);   
-  digitalWrite(TRIG_PIN, LOW);
-  pinMode(ECHO_PIN, INPUT); 
+  // output
+  DDRB |= (0b10000000|0b00000001);     // trig1: pin13, trig2: pin8
+  // input
+  DDRB &= ~(0b01000000);               // echo1: pin12
+  DDRD &= ~(0b10000000);               // echo2: pin7
+  // trig pins low
+  PIND &= ~(1 << PIND0 | 1 << PIND7);
 }
 
 void setup() {
@@ -696,9 +700,9 @@ void handlePacket(TPacket *packet)
 
 //*** NOT BAREMETAL
 void getDist() {
-  digitalWrite(TRIG_PIN, HIGH); 
-  delayMicroseconds(10);     
-  digitalWrite(TRIG_PIN, LOW);  
+  PIND |= (1 << PIND0 | 1 << PIND7);
+  delayMicroseconds(10);
+  PIND &= ~(1 << PIND0 | 1 << PIND7);
   int microsecs = pulseIn(ECHO_PIN, HIGH);
   float cms = microsecs*SPEED_OF_SOUND/2;
 }
