@@ -77,8 +77,10 @@ unsigned long deltaTicks;
 unsigned long targetTicks;
 
 // Ultrasonic sensor
-int TRIG_PIN = 13;  
-int ECHO_PIN = 12;
+int TRIG_PIN1 = 13;  
+int ECHO_PIN1 = 12;
+int TRIG_PIN2 = 8;
+int ECHO_PIN2 = 7;
 float SPEED_OF_SOUND = 0.0345;
 
 /*
@@ -650,9 +652,14 @@ void waitForHello()
 
 // **this is not baremetal lmao
 void startUltrasonic() {
-  pinMode(TRIG_PIN, OUTPUT);   
-  digitalWrite(TRIG_PIN, LOW);
-  pinMode(ECHO_PIN, INPUT); 
+  //DDRD |= 0b11000000;
+  //PIND |= (1 << PIND6 | 1 << PIND7);
+  pinMode(TRIG_PIN1, OUTPUT);
+  digitalWrite(TRIG_PIN1, LOW);
+  pinMode(ECHO_PIN1, INPUT); 
+  pinMode(TRIG_PIN2, OUTPUT);   
+  digitalWrite(TRIG_PIN2, LOW);
+  pinMode(ECHO_PIN2, INPUT); 
 }
 
 void setup() {
@@ -696,11 +703,17 @@ void handlePacket(TPacket *packet)
 
 //*** NOT BAREMETAL
 void getDist() {
-  digitalWrite(TRIG_PIN, HIGH); 
+  digitalWrite(TRIG_PIN1, HIGH); 
+  digitalWrite(TRIG_PIN2, HIGH); 
   delayMicroseconds(10);     
-  digitalWrite(TRIG_PIN, LOW);  
-  int microsecs = pulseIn(ECHO_PIN, HIGH);
-  float cms = microsecs*SPEED_OF_SOUND/2;
+  digitalWrite(TRIG_PIN1, LOW);  
+  digitalWrite(TRIG_PIN2, LOW); 
+  int microsecs1 = pulseIn(ECHO_PIN1, HIGH);
+  float cms1 = microsecs1*SPEED_OF_SOUND/2;
+  int microsecs2 = pulseIn(ECHO_PIN2, HIGH);
+  float cms2 = microsecs2*SPEED_OF_SOUND/2;
+  
+  dbprint("cms1: %f, cms2: %f", cms1, cms2);
 }
 
 void loop() {
