@@ -76,6 +76,11 @@ unsigned long newDist;
 unsigned long deltaTicks;
 unsigned long targetTicks;
 
+// Ultrasonic sensor
+int TRIG_PIN = 13;  
+int ECHO_PIN = 12;
+float SPEED_OF_SOUND = 0.0345;
+
 /*
  * 
  * Alex Communication Routines.
@@ -643,6 +648,13 @@ void waitForHello()
   } // !exit
 }
 
+// **this is not baremetal lmao
+void startUltrasonic() {
+  pinMode(TRIG_PIN, OUTPUT);   
+  digitalWrite(TRIG_PIN, LOW);
+  pinMode(ECHO_PIN, INPUT); 
+}
+
 void setup() {
   // put your setup code here, to run once:
   AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH *
@@ -657,6 +669,7 @@ void setup() {
   enablePullups();
   initializeState();
   sei();
+  startUltrasonic();
 }
 
 void handlePacket(TPacket *packet)
@@ -679,6 +692,15 @@ void handlePacket(TPacket *packet)
     case PACKET_TYPE_HELLO:
       break;
   }
+}
+
+//*** NOT BAREMETAL
+void getDist() {
+  digitalWrite(TRIG_PIN, HIGH); 
+  delayMicroseconds(10);     
+  digitalWrite(TRIG_PIN, LOW);  
+  int microsecs = pulseIn(ECHO_PIN, HIGH);
+  float cms = microsecs*SPEED_OF_SOUND/2;
 }
 
 void loop() {
@@ -747,5 +769,6 @@ if(deltaTicks > 0) {
       stop();
   }
 }
+  getDist();
  
 }
