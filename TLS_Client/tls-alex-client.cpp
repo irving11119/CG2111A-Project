@@ -59,6 +59,16 @@ void handleStatus(const char *buffer)
 	printf("\n---------------------------------------\n\n");
 }
 
+void handleDist(const char *buffer)
+{
+	int32_t data[16];
+	memcpy(data, &buffer[1], sizeof(data));
+
+	printf("\n ------- ALEX DIST REPORT ------- \n\n");
+	printf("cms1:\t\t%d\n", data[10]);
+	printf("cms2:\t\t%d\n", data[11]);
+}
+
 void handleMessage(const char *buffer)
 {
 	printf("MESSAGE FROM ALEX: %s\n", &buffer[1]);
@@ -92,6 +102,7 @@ void handleNetwork(const char *buffer, int len)
 
 		case NET_COMMAND_PACKET:
 		handleCommand(buffer);
+		handleDist(buffer);
 		break;
 	}
 }
