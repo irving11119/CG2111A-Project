@@ -656,7 +656,7 @@ void waitForHello()
           sendBadChecksum();
   } // !exit
 }
-
+/*
 // **please check my baremetal lol
 void startUltrasonic() {
 
@@ -677,7 +677,7 @@ void startUltrasonic() {
   digitalWrite(TRIG_PIN2, LOW);
   pinMode(ECHO_PIN2, INPUT); 
 */
-}
+//}
 
 void setup() {
   // put your setup code here, to run once:
@@ -719,6 +719,7 @@ void handlePacket(TPacket *packet)
 }
 
 //*** 
+/*
 void getDist() {
 
   // set trigger pins high
