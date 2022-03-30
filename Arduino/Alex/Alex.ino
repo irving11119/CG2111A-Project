@@ -137,7 +137,7 @@ void sendStatus()
   sendResponse(&statusPacket);
 }
 
-void sendDist()
+void sendDist();
 
 void sendMessage(const char *message)
 {
