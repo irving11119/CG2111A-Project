@@ -1,5 +1,6 @@
 #include <serialize.h>
 #include "Arduino.h"
+#include <buffer.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "packet.h"
@@ -48,6 +49,8 @@ volatile TDirection dir = STOP;
 
 #define ALEX_LENGTH 16
 #define ALEX_BREADTH 6
+
+TBuffer *buffer_array;
 
 float AlexDiagonal = 0.0;
 float AlexCirc = 0.0;
@@ -137,7 +140,7 @@ void sendStatus()
   sendResponse(&statusPacket);
 }
 
-void sendDist()
+void sendDist();
 
 void sendMessage(const char *message)
 {
@@ -300,10 +303,23 @@ ISR(INT1_vect){
 // Set up the serial connection. For now we are using 
 // Arduino Wiring, you will replace this later
 // with bare-metal code.
+/*
+void setBaudRate(unsigned long baudrate){
+  unsigned int b;
+  b = (unsigned int) round(16000000 / (16.0 * baudrate)) - 1;
+  UBRR0H = (unsigned char) (b >> 8);
+  UBRR0L = (unsigned char) b;
+}
+*/
 void setupSerial()
 {
   // To replace later with bare-metal.
-  Serial.begin(9600);
+  //Serial.begin(9600);
+  //setBaudRate(9600);
+  UBRR0H = 0;
+  UBRR0L = 103;
+  UCSR0C = 0b00000110;
+  UCSR0A = 0;
 }
 
 // Start the serial connection. For now we are using
@@ -314,6 +330,7 @@ void startSerial()
 {
   // Empty for now. To be replaced with bare-metal code
   // later on.
+  UCSR0B = 0b10111000;
   
 }
 
@@ -325,8 +342,20 @@ int readSerial(char *buffer)
 {
   int count=0;
 
+    /*
   while(Serial.available())
     buffer[count++] = Serial.read();
+*/
+  TBufferResult result;
+
+  do
+  {
+    result = readBuffer(buffer_array, &buffer[count]);
+
+    if (result == BUFFER_OK){
+      count++;
+    } 
+  } while (result == BUFFER_OK);
 
   return count;
 }
@@ -336,9 +365,36 @@ int readSerial(char *buffer)
 
 void writeSerial(const char *buffer, int len)
 {
-  Serial.write(buffer, len);
+  //Serial.write(buffer, len);
+  TBufferResult result = BUFFER_OK;
+  for(int i = 1; i < len; i += 1){
+    result = writeBuffer(buffer_array, buffer[i]);
+  }
+
+  UDR0 = buffer[0];
+
+  UCSR0B |= 0b00100000;
 }
 
+
+ISR(USART_RX_vect){
+  unsigned char data = UDR0;
+
+  writeBuffer(buffer_array, data);
+}
+
+ISR(USART_UDRE_vect){
+  unsigned char data;
+  TBufferResult result = readBuffer(buffer_array, &data);
+
+  if(result == BUFFER_OK){
+    UDR0 = data;
+  } else {
+    if (result == BUFFER_EMPTY){
+      UCSR0B &= 0b11011111;
+    }
+  }
+}
 /*
  * Alex's motor drivers.
  * 
@@ -656,7 +712,7 @@ void waitForHello()
           sendBadChecksum();
   } // !exit
 }
-
+/*
 // **please check my baremetal lol
 void startUltrasonic() {
 
@@ -677,7 +733,8 @@ void startUltrasonic() {
   digitalWrite(TRIG_PIN2, LOW);
   pinMode(ECHO_PIN2, INPUT); 
 */
-}
+
+//}
 
 void setup() {
   // put your setup code here, to run once:
@@ -687,13 +744,14 @@ void setup() {
   cli();
   setupEINT();
   setupSerial();
+  initBuffer(buffer_array, 1000);
   startSerial();
   setupMotors();
   startMotors();
   enablePullups();
   initializeState();
   sei();
-  startUltrasonic();
+  //startUltrasonic();
 }
 
 void handlePacket(TPacket *packet)
@@ -812,5 +870,5 @@ if(deltaTicks > 0) {
       stop();
   }
 }
-  getDist();
+  //getDist();
 }
