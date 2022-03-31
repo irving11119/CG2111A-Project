@@ -32,7 +32,7 @@ volatile TDirection dir = STOP;
 // by taking revs * WHEEL_CIRC
 
 #define WHEEL_CIRC          20.4
-
+#define MULTIPLIER          0.95
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
 #define LF                  6   // Left forward pin
@@ -440,7 +440,7 @@ void forward(float dist, float speed)
   OCR0A = val;
   OCR0B = 0;
   OCR1A = 0;
-  OCR1B = val;
+  OCR1B = val * MULTIPLIER;
 
 }
 
@@ -469,7 +469,7 @@ void reverse(float dist, float speed)
 
   OCR0A = 0;
   OCR0B = val;
-  OCR1A = val;
+  OCR1A = val * MULTIPLIER;
   OCR1B = 0;
 }
 
@@ -500,7 +500,7 @@ void left(float ang, float speed)
   OCR0A = 0;
   OCR0B = val;
   OCR1A = 0;
-  OCR1B = val;
+  OCR1B = val * MULTIPLIER;
 
 }
 
@@ -527,7 +527,7 @@ void right(float ang, float speed)
   
   OCR0A = val;
   OCR0B = 0;
-  OCR1A = val;
+  OCR1A = val * MULTIPLIER;
   OCR1B = 0;
 
 }
@@ -572,7 +572,7 @@ void clearOneCounter(int which)
 
 // Clears one particular counter
 
-// Intialize Vincet's internal states
+// Intialize Alex's internal states
 
 void initializeState()
 {
@@ -656,28 +656,7 @@ void waitForHello()
           sendBadChecksum();
   } // !exit
 }
-/*
-// **please check my baremetal lol
-void startUltrasonic() {
 
-  // output
-  DDRB |= (0b10000000|0b00000001);     // trig1: pin13, trig2: pin8
-  // input
-  DDRB &= ~(0b01000000);               // echo1: pin12
-  DDRD &= ~(0b10000000);               // echo2: pin7
-  // trig pins low
-  PIND &= ~(1 << PIND0 | 1 << PIND7);
-/*
-  //DDRD |= 0b11000000;
-  //PIND |= (1 << PIND6 | 1 << PIND7);
-  pinMode(TRIG_PIN1, OUTPUT);
-  digitalWrite(TRIG_PIN1, LOW);
-  pinMode(ECHO_PIN1, INPUT); 
-  pinMode(TRIG_PIN2, OUTPUT);   
-  digitalWrite(TRIG_PIN2, LOW);
-  pinMode(ECHO_PIN2, INPUT); 
-*/
-//}
 
 void setup() {
   // put your setup code here, to run once:
@@ -693,7 +672,6 @@ void setup() {
   enablePullups();
   initializeState();
   sei();
-  startUltrasonic();
 }
 
 void handlePacket(TPacket *packet)
@@ -718,34 +696,6 @@ void handlePacket(TPacket *packet)
   }
 }
 
-//*** 
-/*
-void getDist() {
-
-  // set trigger pins high
-  PIND |= (1 << PIND0 | 1 << PIND7);
-  delayMicroseconds(10);
-  // set trigger pins low
-  PIND &= ~(1 << PIND0 | 1 << PIND7);
-  // read from echo pins
-  int microsecs1 = pulseIn(ECHO_PIN1, HIGH);
-  cms1 = microsecs1*SPEED_OF_SOUND/2;
-  int microsecs2 = pulseIn(ECHO_PIN2, HIGH);
-  cms2 = microsecs2*SPEED_OF_SOUND/2;
-/*
-  digitalWrite(TRIG_PIN1, HIGH); 
-  digitalWrite(TRIG_PIN2, HIGH); 
-  delayMicroseconds(10);     
-  digitalWrite(TRIG_PIN1, LOW);  
-  digitalWrite(TRIG_PIN2, LOW); 
-  int microsecs1 = pulseIn(ECHO_PIN1, HIGH);
-  float cms1 = microsecs1*SPEED_OF_SOUND/2;
-  int microsecs2 = pulseIn(ECHO_PIN2, HIGH);
-  float cms2 = microsecs2*SPEED_OF_SOUND/2;
-  
-  dbprint("cms1: %f, cms2: %f", cms1, cms2);
-*/
-}
 
 void loop() {
 // put your main code here, to run repeatedly:
@@ -813,5 +763,4 @@ if(deltaTicks > 0) {
       stop();
   }
 }
-  getDist();
 }
