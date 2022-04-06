@@ -5,6 +5,7 @@
 #include "packet.h"
 #include "constants.h"
 #include <math.h>
+#include <stdarg.h>
 
 typedef enum
 {
@@ -16,36 +17,32 @@ typedef enum
 } TDirection;
 volatile TDirection dir = STOP;
 
-#include <stdarg.h>
-
 /*
  * Alex's configuration constants
  */
 
 // Number of ticks per revolution from the 
 // wheel encoder.
-
 #define COUNTS_PER_REV      180
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
-
 #define WHEEL_CIRC          20.4
 #define MULTIPLIER          0.95
+
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
-#define LF                  6   // Left forward pin
-#define LR                  5   // Left reverse pin
-#define RF                  10  // Right forward pin
-#define RR                  9  // Right reverse pin
+#define LF                  1 << 5   // Left forward pin
+#define LR                  1 << 6   // Left reverse pin
+#define RF                  1 << 2  // Right forward pin
+#define RR                  1 << 1  // Right reverse pin
 
 /*
  *    Alex's State Variables
  */
 
 #define PI 3.141592654
-
 #define ALEX_LENGTH 16
 #define ALEX_BREADTH 6
 
@@ -59,16 +56,13 @@ volatile unsigned long rightForwardTicks;
 volatile unsigned long leftReverseTicks; 
 volatile unsigned long rightReverseTicks; 
 
+
+// Store the revolutions on Alex's left
+// and right wheels
 volatile unsigned long leftForwardTicksTurns; 
 volatile unsigned long rightForwardTicksTurns;
 volatile unsigned long leftReverseTicksTurns; 
 volatile unsigned long rightReverseTicksTurns;
-
-volatile unsigned long cms1;
-volatile unsigned long cms2;
-
-// Store the revolutions on Alex's left
-// and right wheels
 
 // Forward and backward distance traveled
 volatile unsigned long forwardDist;
@@ -80,13 +74,6 @@ unsigned long newDist;
 unsigned long deltaTicks;
 unsigned long targetTicks;
 
-// Ultrasonic sensor
-int TRIG_PIN1 = 13;  
-int ECHO_PIN1 = 12;
-int TRIG_PIN2 = 8;
-int ECHO_PIN2 = 7;
-float SPEED_OF_SOUND = 0.0345;
-
 /*
  * 
  * Alex Communication Routines.
@@ -95,7 +82,7 @@ float SPEED_OF_SOUND = 0.0345;
 TResult readPacket(TPacket *packet)
 {
     // Reads in data from the serial port and
-    // deserializes it.Returns deserialized
+    // deserializes it. Returns deserialized
     // data in "packet".
     
     char buffer[PACKET_SIZE];
@@ -106,8 +93,7 @@ TResult readPacket(TPacket *packet)
     if(len == 0)
       return PACKET_INCOMPLETE;
     else
-      return deserialize(buffer, len, packet);
-    
+      return deserialize(buffer, len, packet); 
 }
 
 void sendStatus()
@@ -132,12 +118,8 @@ void sendStatus()
   statusPacket.params[7] = rightReverseTicksTurns;
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
-  statusPacket.params[10] = cms1;
-  statusPacket.params[11] = cms2;
   sendResponse(&statusPacket);
 }
-
-void sendDist();
 
 void sendMessage(const char *message)
 {
@@ -167,7 +149,6 @@ void sendBadPacket()
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
-  
 }
 
 void sendBadChecksum()
@@ -190,7 +171,6 @@ void sendBadCommand()
   badCommand.packetType=PACKET_TYPE_ERROR;
   badCommand.command=RESP_BAD_COMMAND;
   sendResponse(&badCommand);
-
 }
 
 void sendBadResponse()
@@ -220,7 +200,6 @@ void sendResponse(TPacket *packet)
   writeSerial(buffer, len);
 }
 
-
 /*
  * Setup and start codes for external interrupts and 
  * pullup resistors.
@@ -232,7 +211,7 @@ void enablePullups()
   // Use bare-metal to enable the pull-up resistors on pins
   // 2 and 3. These are pins PD2 and PD3 respectively.
   // We set bits 2 and 3 in DDRD to 0 to make them inputs.
-  DDRD &= ~(0b00001100);
+  DDRD &= ~(1 << PIND2 | 1 << PIND3);
   PIND |= (1 << PIND2 | 1 << PIND3);   
   
 }
@@ -266,8 +245,9 @@ void rightISR()
     rightReverseTicksTurns++;
   }
 }
+
 // Set up the external interrupt pins INT0 and INT1
-// for falling edge triggered. Use bare-metal.
+// for falling edge triggered. 
 void setupEINT()
 {
   // Use bare-metal to configure pins 2 and 3 to be
@@ -279,19 +259,13 @@ void setupEINT()
   sei();
 }
 
-// Implement the external interrupt ISRs below.
-// INT0 ISR should call leftISR while INT1 ISR
-// should call rightISR.
+// External interrupt ISRs
 ISR(INT0_vect){
   leftISR();
 }
-
 ISR(INT1_vect){
   rightISR();
 }
-
-
-// Implement INT0 and INT1 ISRs above.
 
 /*
  * Setup and start codes for serial communications
@@ -309,18 +283,15 @@ void setupSerial()
 // Start the serial connection. For now we are using
 // Arduino wiring and this function is empty. We will
 // replace this later with bare-metal code.
-
 void startSerial()
 {
   // Empty for now. To be replaced with bare-metal code
   // later on.
-  
 }
 
 // Read the serial port. Returns the read character in
 // ch if available. Also returns TRUE if ch is valid. 
 // This will be replaced later with bare-metal code.
-
 int readSerial(char *buffer)
 {
   int count=0;
@@ -333,7 +304,6 @@ int readSerial(char *buffer)
 
 // Write to the serial port. Replaced later with
 // bare-metal code
-
 void writeSerial(const char *buffer, int len)
 {
   Serial.write(buffer, len);
@@ -353,9 +323,9 @@ void setupMotors()
    *    A1IN - Pin 5, PD5, OC0B
    *    A2IN - Pin 6, PD6, OC0A
    *    B1IN - Pin 10, PB2, OC1B
-   *    B2In - pIN 9, PB1, OC1A
+   *    B2IN - Pin 9, PB1, OC1A
    */
-  //set up timer0
+  // set up timer0
   TCNT0 = 0;
   TCCR0A = 0b10100001;
   
@@ -364,7 +334,7 @@ void setupMotors()
   
   TIMSK0 |= 0b110;
   
-  //set up timer1
+  // set up timer1
   TCNT1 = 0;
   TCCR1A = 0b10100001;;
   
@@ -376,28 +346,21 @@ void setupMotors()
 }
 
 // Start the PWM for Alex's motors.
-// We will implement this later. For now it is
-// blank.
 void startMotors()
 {
   TCCR0B = 0b00000011;
   TCCR1B = 0b00000011;
   
-  DDRD |= (1 << 5 | 1 << 6);
-  DDRB |= (1 << 1 | 1 << 2);
-
+  DDRD |= (LF | LR);
+  DDRB |= (RF | RR);
 }
-
 
 ISR(TIMER0_COMPA_vect){
 }
-
 ISR(TIMER0_COMPB_vect){
 }
-
 ISR(TIMER1_COMPA_vect){
 }
-
 ISR(TIMER1_COMPB_vect){
 }
 
@@ -421,21 +384,12 @@ int pwmVal(float speed)
 void forward(float dist, float speed)
 {
   if(dist > 0)
-           deltaDist = dist;
-     else
-           deltaDist=9999999;
-     newDist=forwardDist + deltaDist;
+    deltaDist = dist;
+  else
+    deltaDist=9999999;
+  newDist=forwardDist + deltaDist;
   dir = FORWARD;
   int val = pwmVal(speed);
-
-  // For now we will ignore dist and move
-  // forward indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
-
  
   OCR0A = val;
   OCR0B = 0;
@@ -452,20 +406,12 @@ void forward(float dist, float speed)
 void reverse(float dist, float speed)
 {
   if(dist > 0)
-           deltaDist = dist;
-     else
-           deltaDist=9999999;
-     newDist=reverseDist + deltaDist;
+    deltaDist = dist;
+  else
+    deltaDist=9999999;
+  newDist=reverseDist + deltaDist;
   dir = BACKWARD;
   int val = pwmVal(speed);
-
-  // For now we will ignore dist and 
-  // reverse indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
 
   OCR0A = 0;
   OCR0B = val;
@@ -485,18 +431,14 @@ unsigned long computeDeltaTicks(float ang){
 
 void left(float ang, float speed)
 {
-  if(ang == 0) deltaTicks=99999999;
+  if(ang == 0) 
+    deltaTicks=99999999;
   else
-  deltaTicks=computeDeltaTicks(ang);
+    deltaTicks=computeDeltaTicks(ang);
   targetTicks = leftReverseTicksTurns + deltaTicks;
   dir = LEFT;
   int val = pwmVal(speed);
-
-  // For now we will ignore ang. We will fix this in Week 9.
-  // We will also replace this code with bare-metal later.
-  // To turn left we reverse the left wheel and move
-  // the right wheel forward.
-
+  
   OCR0A = 0;
   OCR0B = val;
   OCR1A = 0;
@@ -511,20 +453,15 @@ void left(float ang, float speed)
 // turn right indefinitely.
 void right(float ang, float speed)
 {
-  if(ang == 0) deltaTicks=99999999;
+  if(ang == 0) 
+    deltaTicks=99999999;
   else
-  deltaTicks=computeDeltaTicks(ang);
+    deltaTicks=computeDeltaTicks(ang);
   targetTicks = rightReverseTicksTurns + deltaTicks;
   dir = LEFT;
   int val = pwmVal(speed);
   dir = RIGHT;
 
-  // For now we will ignore ang. We will fix this in Week 9.
-  // We will also replace this code with bare-metal later.
-  // To turn right we reverse the right wheel and move
-  // the left wheel forward.
-
-  
   OCR0A = val;
   OCR0B = 0;
   OCR1A = val * MULTIPLIER;
@@ -532,7 +469,7 @@ void right(float ang, float speed)
 
 }
 
-// Stop Alex. To replace with bare-metal code later.
+// Stop Alex
 void stop()
 {
   dir = STOP;
@@ -541,7 +478,6 @@ void stop()
   OCR0B = 0;
   OCR1A = 0;
   OCR1B = 0;
-
 }
 
 /*
@@ -564,16 +500,7 @@ void clearCounters()
   reverseDist=0; 
 }
 
-// Clears one particular counter
-void clearOneCounter(int which)
-{
-  clearCounters();
-}
-
-// Clears one particular counter
-
 // Intialize Alex's internal states
-
 void initializeState()
 {
   clearCounters();
@@ -584,8 +511,7 @@ void handleCommand(TPacket *command)
   switch(command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
-
-     case COMMAND_FORWARD:
+    case COMMAND_FORWARD:
         sendOK();
         forward((float) command->params[0], (float) command->params[1]);
       break;
@@ -603,25 +529,24 @@ void handleCommand(TPacket *command)
       break;
 
     case COMMAND_GET_STATS:
-      sendStatus();
+        sendStatus();
       break;
-
-     case COMMAND_CLEAR_STATS:
-        clearOneCounter(command->params[0]);
+    case COMMAND_CLEAR_STATS:
+        clearCounters(command->params[0]);
         sendOK();
         break;
 
-     case COMMAND_STOP:
-      sendOK();
-      stop();
+    case COMMAND_STOP:
+        sendOK();
+        stop();
       break;
  
-        
     default:
       sendBadCommand();
   }
 }
 
+// hello! i think we dont use this
 void waitForHello()
 {
   int exit=0;
@@ -657,12 +582,12 @@ void waitForHello()
   } // !exit
 }
 
-
-void setup() {
+void setup() 
+{
   // put your setup code here, to run once:
   AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH *
-             ALEX_BREADTH));
-       AlexCirc = PI  * AlexDiagonal;
+            ALEX_BREADTH));
+  AlexCirc = PI  * AlexDiagonal;
   cli();
   setupEINT();
   setupSerial();
@@ -682,6 +607,7 @@ void handlePacket(TPacket *packet)
       handleCommand(packet);
       break;
 
+    // do we need to do anything w other cases
     case PACKET_TYPE_RESPONSE:
       break;
 
@@ -696,9 +622,8 @@ void handlePacket(TPacket *packet)
   }
 }
 
-
-void loop() {
-// put your main code here, to run repeatedly:
+void loop() 
+{
   TPacket recvPacket; // This holds commands from the Pi
 
   TResult result = readPacket(&recvPacket);
@@ -710,57 +635,48 @@ void loop() {
     {
       sendBadPacket();
     }
-    else
-      if(result == PACKET_CHECKSUM_BAD)
-      {
-        sendBadChecksum();
-      } 
-      
- if (deltaDist > 0)
- {
-  if (dir == FORWARD){
-    if(forwardDist > newDist){
-      deltaDist = 0;
-      newDist = 0;
-      stop();
-    }
-  } else
-
-  if(dir == BACKWARD)
-  {
-    if(reverseDist > newDist)
+  else
+    if(result == PACKET_CHECKSUM_BAD)
     {
+      sendBadChecksum();
+    } 
+  if (deltaDist > 0) {
+    if (dir == FORWARD) {
+      if(forwardDist > newDist) {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    } else if(dir == BACKWARD) {
+      if(reverseDist > newDist) {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    } else if(dir == STOP){
       deltaDist = 0;
       newDist = 0;
       stop();
     }
-  } else
-
-  if(dir == STOP){
-    deltaDist = 0;
-    newDist = 0;
-    stop();
   }
- }
-
-if(deltaTicks > 0) {
-  if(dir == LEFT) {
-    if(leftReverseTicksTurns >= targetTicks) {
+  
+  if(deltaTicks > 0) {
+    if(dir == LEFT) {
+      if(leftReverseTicksTurns >= targetTicks) {
+        deltaTicks=0;
+        targetTicks=0;
+        stop();
+      }
+    } else if (dir == RIGHT) {
+      if(rightReverseTicksTurns >= targetTicks) {
+        deltaTicks=0;
+        targetTicks=0;
+        stop();
+      }
+    } else if (dir == STOP) {
       deltaTicks=0;
       targetTicks=0;
       stop();
     }
   }
-  else if (dir == RIGHT) {
-    if(rightReverseTicksTurns >= targetTicks) {
-      deltaTicks=0;
-      targetTicks=0;
-      stop();
-    }
-  } else if (dir == STOP) {
-      deltaTicks=0;
-      targetTicks=0;
-      stop();
-  }
-}
 }
