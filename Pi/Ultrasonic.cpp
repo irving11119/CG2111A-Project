@@ -4,15 +4,15 @@
 #include <stdio.h>
 #include <pigpio.h>
 
-#define TRIG 19
-#define ECHO 26
-#define TRIG2 14
-#define ECHO2 15
+#define TRIGLEFT 19
+#define ECHOLEFT 26
+#define TRIGRIGHT 14
+#define ECHORIGHT 15
 
 double last_range = 0;
 
 /**
- * @brief Sets the system for a delay of specified tim 
+ * @brief Sets the system for a delay of specified time 
  * 
  * @param ms An int representing the number of milliseconds for the system to delay
  */
@@ -26,16 +26,16 @@ void delay(int ms) {
  */
 void ping() {
 
-   gpioSetMode(TRIG, PI_OUTPUT);
-   gpioSetMode(TRIG2, PI_OUTPUT);
-   gpioWrite(TRIG, PI_ON);
-   gpioWrite(TRIG2,PI_ON);
+   gpioSetMode(TRIGLEFT, PI_OUTPUT);
+   gpioSetMode(TRIGRIGHT, PI_OUTPUT);
+   gpioWrite(TRIGLEFT, PI_ON);
+   gpioWrite(TRIGRIGHT,PI_ON);
    gpioDelay(10);
-   gpioWrite(TRIG, PI_OFF);
-   gpioWrite(TRIG2, PI_OFF);
+   gpioWrite(TRIGLEFT, PI_OFF);
+   gpioWrite(TRIGRIGHT, PI_OFF);
    gpioDelay(5);
-   gpioSetMode(ECHO2, PI_INPUT);
-   gpioSetMode(ECHO, PI_INPUT);
+   gpioSetMode(ECHORIGHT, PI_INPUT);
+   gpioSetMode(ECHOLEFT, PI_INPUT);
 }
 /**
  * @brief Function to obtain the distance reading from the left ultrasonic sensor
@@ -127,10 +127,10 @@ int main(){
 
    if (gpioInitialise() < 0) return 1;
 
-   gpioSetMode(ECHO, PI_INPUT);
-   gpioSetMode(ECHO2, PI_INPUT);
-   gpioSetAlertFunc(ECHO2,rangeRight);
-   gpioSetAlertFunc(ECHO, rangeLeft);
+   gpioSetMode(ECHOLEFT, PI_INPUT);
+   gpioSetMode(ECHORIGHT, PI_INPUT);
+   gpioSetAlertFunc(ECHORIGHT,rangeRight);
+   gpioSetAlertFunc(ECHOLEFT, rangeLeft);
 
    while (1) {
 
