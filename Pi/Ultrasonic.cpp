@@ -1,5 +1,5 @@
 // compile with g++ -Wall -pthread -o ultrasonic ultrasonic.cpp -lpigpio -lrt
-// Pins set to 19 and 26 (see code)
+// Pins set to 19 and 26 for the left sensor and Pins set to 14 and 15 to the right sensor (see code)
 // install pigpio first
 #include <stdio.h>
 #include <pigpio.h>
@@ -68,7 +68,7 @@ void rangeLeft(int gpio, int level, uint32_t tick) {
             }
            }
          else{
-           printf("L: Out of range\n");
+           printf("L: Out of Range\n");
            last_range = 0;
          }
 

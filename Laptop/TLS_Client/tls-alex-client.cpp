@@ -8,6 +8,13 @@
 // Packet types, error codes, etc.
 #include "constants.h"
 
+/* #define filenames for the client private key, certificatea,
+   CA filename, etc. that you need to create a client */
+#define PRIVATE_KEY "laptop.key"
+#define CERTIFICATE "laptop.crt"
+#define CA_CERT "signing.pem"
+#define COMMON_NAME "SU_CG2111A"
+
 // Tells us that the network is running.
 static volatile int networkActive=0;
 
@@ -113,9 +120,8 @@ void sendData(void *conn, const char *buffer, int len)
 	printf("\nSENDING %d BYTES DATA\n\n", len);
 	if(networkActive)
 	{
-		/* TODO: Insert SSL write here to write buffer to network */
+		// write buffer to network
 		sslWrite(conn, buffer, len);
-		/* END TODO */	
 		networkActive = (c > 0);
 	}
 }
@@ -127,11 +133,9 @@ void *readerThread(void *conn)
 
 	while(networkActive)
 	{
-		/* TODO: Insert SSL read here into buffer */
+		//read here into buffer
 		sslRead(conn, buffer, len);
         printf("read %d bytes from server.\n", len);
-		
-		/* END TODO */
 
 		networkActive = (len > 0);
 
@@ -141,10 +145,9 @@ void *readerThread(void *conn)
 
 	printf("Exiting network listener thread\n");
     
-    /* TODO: Stop the client loop and call EXIT_THREAD */
+    // Stop the client loop and call EXIT_THREAD
 	stopClient();
 	EXIT_THREAD(conn);
-    /* END TODO */
 }
 
 void flushInput()
@@ -217,26 +220,17 @@ void *writerThread(void *conn)
 
 	printf("Exiting keyboard thread\n");
 
-    /* TODO: Stop the client loop and call EXIT_THREAD */
+    //Stop the client loop and call EXIT_THREAD
 	stopClient();
 	EXIT_THREAD(conn);
-    /* END TODO */
 }
 
-/* TODO: #define filenames for the client private key, certificatea,
-   CA filename, etc. that you need to create a client */
-	#define PRIVATE_KEY "laptop.key"
-	#define CERTIFICATE "laptop.crt"
-	#define CA_CERT "signing.pem"
-	#define COMMON_NAME "SU_CG2111A"
 
-
-/* END TODO */
 void connectToServer(const char *serverName, int portNum)
 {
-    /* TODO: Create a new client */
+    //Create a new client
 	createClient(serverName, portNum, 1, CA_CERT, COMMON_NAME, 1, CERTIFICATE, PRIVATE_KEY, readerThread, writerThread);  
-    /* END TODO */
+
 }
 
 int main(int ac, char **av)
@@ -250,12 +244,9 @@ int main(int ac, char **av)
     networkActive = 1;
     connectToServer(av[1], atoi(av[2]));
 
-    /* TODO: Add in while loop to prevent main from exiting while the
-    client loop is running */
 	while(client_is_running()){
 
 	}
 
-    /* END TODO */
 	printf("\nMAIN exiting\n\n");
 }

@@ -3,12 +3,18 @@
 % Run plot_lidar.m on Matlab GUI
 % run command "rosshutdown" once done to shutdown ros network
 
-rosinit('172.20.10.10'); %ROS_MASTER_URI aka Pi's IP address  
-linkdata on %links data to plot for real time updates
+IP_ADDRESS = '172.20.10.10'
+
+rosinit(IP_ADDRESS);   
+linkdata on
+
+% Polls for LIDAR '/scan' data
+% If error occurs, error type is printed to the command window
+% Else the data is plotted on an axis
 
 while 1
     try
-        sub = rossubscriber('/scan'); % suscribes to Lidar data
+        sub = rossubscriber('/scan'); % suscribes to LIDAR data
         scan = receive(sub);
         plot(scan,'MaximumRange', 2);
         rectangle('Position', [-0.025 -0.045 0.19 0.10]); % rectangle to simulate dimensions of Alex 

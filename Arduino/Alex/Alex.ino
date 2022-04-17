@@ -1,7 +1,6 @@
 #include <serialize.h>
 #include "Arduino.h"
-#include <avr/io.h>
-#include <avr/interrupt.h>
+#include <buffer.h>
 #include "packet.h"
 #include "constants.h"
 #include <math.h>
@@ -73,6 +72,8 @@ unsigned long newDist;
 
 unsigned long deltaTicks;
 unsigned long targetTicks;
+
+TBuffer *buffer_array;
 
 /*
  * 
@@ -274,10 +275,23 @@ ISR(INT1_vect){
 // Set up the serial connection. For now we are using 
 // Arduino Wiring, you will replace this later
 // with bare-metal code.
+
+void setBaudRate(unsigned long baudrate){
+  unsigned int b;
+  b = (unsigned int) round(16000000 / (16.0 * baudrate)) - 1;
+  UBRR0H = (unsigned char) (b >> 8);
+  UBRR0L = (unsigned char) b;
+}
+
 void setupSerial()
 {
   // To replace later with bare-metal.
-  Serial.begin(9600);
+  //Serial.begin(9600);
+  setBaudRate(9600);
+  UBRR0H = 0;
+  UBRR0L = 103;
+  UCSR0C = 0b00000110;
+  UCSR0A = 0;
 }
 
 // Start the serial connection. For now we are using
@@ -285,8 +299,7 @@ void setupSerial()
 // replace this later with bare-metal code.
 void startSerial()
 {
-  // Empty for now. To be replaced with bare-metal code
-  // later on.
+  UCSR0B = 0b10111000;
 }
 
 // Read the serial port. Returns the read character in
@@ -296,8 +309,20 @@ int readSerial(char *buffer)
 {
   int count=0;
 
+    /*
   while(Serial.available())
     buffer[count++] = Serial.read();
+*/
+  TBufferResult result;
+
+  do
+  {
+    result = readBuffer(buffer_array, &buffer[count]);
+
+    if (result == BUFFER_OK){
+      count++;
+    } 
+  } while (result == BUFFER_OK);
 
   return count;
 }
@@ -306,7 +331,35 @@ int readSerial(char *buffer)
 // bare-metal code
 void writeSerial(const char *buffer, int len)
 {
-  Serial.write(buffer, len);
+  //Serial.write(buffer, len);
+  TBufferResult result = BUFFER_OK;
+  for(int i = 1; i < len; i += 1){
+    result = writeBuffer(buffer_array, buffer[i]);
+  }
+
+  UDR0 = buffer[0];
+
+  UCSR0B |= 0b00100000;
+}
+
+
+ISR(USART_RX_vect){
+  unsigned char data = UDR0;
+
+  writeBuffer(buffer_array, data);
+}
+
+ISR(USART_UDRE_vect){
+  unsigned char data;
+  TBufferResult result = readBuffer(buffer_array, &data);
+
+  if(result == BUFFER_OK){
+    UDR0 = data;
+  } else {
+    if (result == BUFFER_EMPTY){
+      UCSR0B &= 0b11011111;
+    }
+  }
 }
 
 /*
@@ -500,6 +553,12 @@ void clearCounters()
   reverseDist=0; 
 }
 
+// Clears one particular counter
+void clearOneCounter(int which)
+{
+  clearCounters();
+}
+
 // Intialize Alex's internal states
 void initializeState()
 {
@@ -532,7 +591,7 @@ void handleCommand(TPacket *command)
         sendStatus();
       break;
     case COMMAND_CLEAR_STATS:
-        clearCounters(command->params[0]);
+        clearOneCounter(command->params[0]);
         sendOK();
         break;
 
