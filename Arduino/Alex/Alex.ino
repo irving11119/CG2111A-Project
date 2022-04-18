@@ -287,10 +287,11 @@ void setupSerial()
 {
   // To replace later with bare-metal.
   //Serial.begin(9600);
+  //Set UBRR0H and UBRR0L to 103 and 0 respectively
   setBaudRate(9600);
-  UBRR0H = 0;
-  UBRR0L = 103;
+  //Asynchronous USART, No Parity, 1 Stop Bit, 8 Bits
   UCSR0C = 0b00000110;
+  //Disable everything in UCSR0A
   UCSR0A = 0;
 }
 
