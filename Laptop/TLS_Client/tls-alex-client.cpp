@@ -10,10 +10,10 @@
 
 /* #define filenames for the client private key, certificatea,
    CA filename, etc. that you need to create a client */
-#define PRIVATE_KEY "laptop.key"
-#define CERTIFICATE "laptop.crt"
-#define CA_CERT "signing.pem"
-#define COMMON_NAME "SU_CG2111A"
+	#define PRIVATE_KEY "laptop.key"
+	#define CERTIFICATE "laptop.crt"
+	#define CA_CERT "signing.pem"
+	#define COMMON_NAME "SU_CG2111A"
 
 // Tells us that the network is running.
 static volatile int networkActive=0;
@@ -66,16 +66,6 @@ void handleStatus(const char *buffer)
 	printf("\n---------------------------------------\n\n");
 }
 
-void handleDist(const char *buffer)
-{
-	int32_t data[16];
-	memcpy(data, &buffer[1], sizeof(data));
-
-	printf("\n ------- ALEX DIST REPORT ------- \n\n");
-	printf("cms1:\t\t%d\n", data[10]);
-	printf("cms2:\t\t%d\n", data[11]);
-}
-
 void handleMessage(const char *buffer)
 {
 	printf("MESSAGE FROM ALEX: %s\n", &buffer[1]);
@@ -109,7 +99,6 @@ void handleNetwork(const char *buffer, int len)
 
 		case NET_COMMAND_PACKET:
 		handleCommand(buffer);
-		handleDist(buffer);
 		break;
 	}
 }
@@ -120,8 +109,8 @@ void sendData(void *conn, const char *buffer, int len)
 	printf("\nSENDING %d BYTES DATA\n\n", len);
 	if(networkActive)
 	{
-		// write buffer to network
-		sslWrite(conn, buffer, len);
+		// Write buffer to network 
+		c = sslWrite(conn, buffer, len);
 		networkActive = (c > 0);
 	}
 }
@@ -133,8 +122,8 @@ void *readerThread(void *conn)
 
 	while(networkActive)
 	{
-		//read here into buffer
-		sslRead(conn, buffer, len);
+		// Read here into buffer
+		len = sslRead(conn, buffer, sizeof(buffer));
         printf("read %d bytes from server.\n", len);
 
 		networkActive = (len > 0);
@@ -220,7 +209,7 @@ void *writerThread(void *conn)
 
 	printf("Exiting keyboard thread\n");
 
-    //Stop the client loop and call EXIT_THREAD
+    //Stop the client loop and call EXIT_THREAD 
 	stopClient();
 	EXIT_THREAD(conn);
 }
@@ -228,9 +217,8 @@ void *writerThread(void *conn)
 
 void connectToServer(const char *serverName, int portNum)
 {
-    //Create a new client
+    // Create a new client
 	createClient(serverName, portNum, 1, CA_CERT, COMMON_NAME, 1, CERTIFICATE, PRIVATE_KEY, readerThread, writerThread);  
-
 }
 
 int main(int ac, char **av)
@@ -244,6 +232,8 @@ int main(int ac, char **av)
     networkActive = 1;
     connectToServer(av[1], atoi(av[2]));
 
+    /* Prevents main from exiting while the
+    client loop is running */
 	while(client_is_running()){
 
 	}
