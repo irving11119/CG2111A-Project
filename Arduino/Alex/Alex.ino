@@ -28,7 +28,7 @@ volatile TDirection dir = STOP;
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
 #define WHEEL_CIRC          20.4
-#define MULTIPLIER          0.95
+#define MULTIPLIER          0.95 //for calibration of wheels
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
@@ -73,7 +73,8 @@ unsigned long newDist;
 unsigned long deltaTicks;
 unsigned long targetTicks;
 
-TBuffer *buffer_array;
+TBuffer _recvBuffer;
+TBuffer _xmitBuffer;
 
 /*
  * 
@@ -254,10 +255,8 @@ void setupEINT()
   // Use bare-metal to configure pins 2 and 3 to be
   // falling edge triggered. Remember to enable
   // the INT0 and INT1 interrupts.
-  cli();
   EICRA = 0b00001010;
   EIMSK = 0b00000011;
-  sei();
 }
 
 // External interrupt ISRs
@@ -276,22 +275,13 @@ ISR(INT1_vect){
 // Arduino Wiring, you will replace this later
 // with bare-metal code.
 
-void setBaudRate(unsigned long baudrate){
-  unsigned int b;
-  b = (unsigned int) round(16000000 / (16.0 * baudrate)) - 1;
-  UBRR0H = (unsigned char) (b >> 8);
-  UBRR0L = (unsigned char) b;
-}
-
 void setupSerial()
 {
   // To replace later with bare-metal.
   //Serial.begin(9600);
-  //Set UBRR0H and UBRR0L to 103 and 0 respectively
-  setBaudRate(9600);
-  //Asynchronous USART, No Parity, 1 Stop Bit, 8 Bits
-  UCSR0C = 0b00000110;
-  //Disable everything in UCSR0A
+  UBRR0L = 103;
+  UBRR0H = 0;
+  UCSR0C = 0b00000110; //set to 8N1
   UCSR0A = 0;
 }
 
@@ -318,7 +308,7 @@ int readSerial(char *buffer)
 
   do
   {
-    result = readBuffer(buffer_array, &buffer[count]);
+    result = readBuffer(&_recvBuffer, &buffer[count]);
 
     if (result == BUFFER_OK){
       count++;
@@ -335,7 +325,7 @@ void writeSerial(const char *buffer, int len)
   //Serial.write(buffer, len);
   TBufferResult result = BUFFER_OK;
   for(int i = 1; i < len; i += 1){
-    result = writeBuffer(buffer_array, buffer[i]);
+    result = writeBuffer(&_xmitBuffer, buffer[i]);
   }
 
   UDR0 = buffer[0];
@@ -347,12 +337,12 @@ void writeSerial(const char *buffer, int len)
 ISR(USART_RX_vect){
   unsigned char data = UDR0;
 
-  writeBuffer(buffer_array, data);
+  writeBuffer(&_recvBuffer, data);
 }
 
 ISR(USART_UDRE_vect){
   unsigned char data;
-  TBufferResult result = readBuffer(buffer_array, &data);
+  TBufferResult result = readBuffer(&_xmitBuffer, &data);
 
   if(result == BUFFER_OK){
     UDR0 = data;
@@ -362,7 +352,6 @@ ISR(USART_UDRE_vect){
     }
   }
 }
-
 /*
  * Alex's motor drivers.
  * 
@@ -496,7 +485,7 @@ void left(float ang, float speed)
   OCR0A = 0;
   OCR0B = val;
   OCR1A = 0;
-  OCR1B = val * MULTIPLIER;
+  OCR1B = val;
 
 }
 
@@ -518,7 +507,7 @@ void right(float ang, float speed)
 
   OCR0A = val;
   OCR0B = 0;
-  OCR1A = val * MULTIPLIER;
+  OCR1A = val;
   OCR1B = 0;
 
 }
@@ -606,7 +595,6 @@ void handleCommand(TPacket *command)
   }
 }
 
-// hello! i think we dont use this
 void waitForHello()
 {
   int exit=0;
