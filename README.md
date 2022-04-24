@@ -1,8 +1,8 @@
-#CG2111A
+# CG2111A
 
 CG2111A, Engineering Principles and Practices II, covers the fundamental principles on certain advanced concepts and then design and programme a real-world system. The module involves designing a complex computer engineering system that facilitates information processing, real-world interfacing, and understanding the effects of certain useful metrics such as, scaling, safety, security, sustainability, societal impact, fault-tolerant design, etc. The final project of the module, a robot named Alex is a practical demonstration of the concepts learned throughout the module.
 
-##Alex
+## Alex
 
 Alex is a remotely controlled robot, capable of navigating simple unseen terrains whilst mapping the surrounding environment. The main controlling device of Alex is a Raspberry Pi 2 (RPi 2) installed with Robot Operating System (ROS) Kinetic. In addition, Alex also has a  Light Detection and Ranging (LiDAR) scanner, the Slamtech RPLIDAR A1 for environmental mapping, an Arduino UNO for motor control and two HC-SR04 Ultrasonic Sensors to aid in navigation.
 
@@ -13,13 +13,13 @@ The LiDAR data works utilising ROS and the rplidar_ros library. To visualise the
 The Ultrasonic Sensors provide additional data to aid in navigation and supplement any lack of information in the LiDAR data. This is achieved by utilising the RPi's GPIO pins and the pigpio header file to obtain two readings for each Ultrasonic sensor. The readings aid in navigation by providing more environmental data to aid in navigate around an unseen and unknown environment.
 
 
-##Configuring ROS on Alex
+## Configuring ROS on Alex
 
 The RPi should have ROS Kinetic as well the rplidar_ros package installed properly. 
 
 To allow external connections to the ROS Master, the ROS_MASTER_URI environment variable must be set to the IP address of the RPi. This can be done by configuring the .bashrc file on the Pi.
 
-Say the IP address of the RPi is 192.158.1.38
+For example if the IP address of the RPi is 192.158.1.38, we will run the following command:
 
 ```bash
 echo 'export $ROS_MASTER_URI=http://192.158.1.38:11311' >> ~/.bashrc
@@ -45,7 +45,7 @@ Henceforth, the TLS server will be running and listening for an incoming connect
 
 To set up TLS Client, open a terminal on the remote workstation and navigate over to the folder containing 'tls-alex-client.cpp'. 
 
-First we need to install standard TLS Programming Libraries.
+First we need to install standard TLS Programming Libraries using the following commands:
 
 ```bash
 sudo apt-get install libssl-dev
@@ -53,7 +53,7 @@ sudo apt-get install libssl-dev
 
 Once done, we can compile and run the TLS Client. The TLS client requires the IP address of the RPi as well the port the server is running on. In this case it is port 5000.
 
-Run the following commands:
+Run the following commands to compile and run the client:
 
 ```bash
 g++ tls-alex-client.cpp make_tls_client.cpp tls_client_lib.cpp tls_pthread.cpp tls_common_lib.cpp -pthread -lssl -lcrypto -o tls-alex-client
