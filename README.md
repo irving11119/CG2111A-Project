@@ -29,6 +29,7 @@ echo 'export $ROS_MASTER_URI=http://192.158.1.38:11311' >> ~/.bashrc
 
 First, the Arduino Uno must have the correct program uploaded. Connect a laptop to the Uno via USB and upload the file 'Alex.ino' to the Uno. Ensure the necessary header and zip files are included for the program to compile. 
 
+
 Once done, we will set up the TLS server and client. Before this step, both the remote workstation as well as the RPi must have the necessary CA's as well as private and public keys to facilitate the TLS handshake.
 
 To set up the TLS Server and get it running, navigate over to the directory containing the 'tls-alex-server.cpp' file in a new terminal on the RPi. 
@@ -61,3 +62,37 @@ g++ tls-alex-client.cpp make_tls_client.cpp tls_client_lib.cpp tls_pthread.cpp t
 ./tls-alex-client 192.158.1.38 5000
 ```
 The terminal of the remote workstation will confirm the success of the TLS Handshake. Henceforth, the TLS Client is running and the command and parameters can be sent to Alex securely.
+
+
+In the terminal of the TLS Client, we can remotely send the commands for direction, distance/angle and power of motors for Alex. The first command is the direction command in the form of "f" , "b", "r", "l" (Representing forward, backwards, right and left). The second command is an integer representing either the distance or angle (in cm/degrees) and the second integer represents the power of the motors as a percentage of the max power. 
+
+For example, to command Alex to move forward 20cm at 90% power:
+
+```bash
+f
+
+20 90
+```
+
+To command Alex to turn left 90 degrees at 80% power:
+
+```bash
+l
+
+90 80
+```  
+
+
+## Mapping Environment
+
+To map the environment, we need to launch the rplidar.launch file within the rplidar_ros package. After launching the file, we are able to remotely plot out the environment on MATLAB (installed with the ROS Toolbox).
+
+First, in a new terminal on Alex, type the command:
+
+```bash
+source ~/Desktop/slam/devel/setup.bash
+
+roslaunch rplidar_ros rplidar.launch
+```
+
+On a remote station with MATLAB installed, run the script plot_lidar.m and map the environment using the live plot.   
