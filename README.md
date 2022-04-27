@@ -102,8 +102,11 @@ On a remote station with MATLAB installed, run the script plot_lidar.m and map t
 Project Group Members:
 
 Ee Jia En Jared
+
 Eugene Ang Jia Shing
+
 Hong Lin Shang
+
 Irving Alexander De Boer
 
 The competition of this project would not be possible without the guidance CG2111 Teaching Team, TAs and Lab Technicians.
